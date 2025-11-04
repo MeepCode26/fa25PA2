@@ -98,7 +98,33 @@ int buildEncodingTree(int nextFree) {
     //    - Set left/right pointers
     //    - Push new parent index back into the heap
     // 4. Return the index of the last remaining node (root)
-    return -1; // placeholder
+    MinHeap heap;
+
+    // Push all leaf nodes into the heap
+    for (int i = 0; i < nextFree; ++i) {
+        heap.push(i, weightArr);
+    }
+
+    int nextNode = nextFree; // next free index for internal nodes
+
+    while (heap.size > 1) {
+        // pop two of the smallest nodes
+        int left = heap.pop(weightArr);
+        int right = heap.pop(weightArr);
+
+        // create new parent node
+        weightArr[nextNode] = weightArr[left] + weightArr[right];
+        leftArr[nextNode] = left;
+        rightArr[nextNode] = right;
+        charArr[nextNode] = '\0'; // internal node
+
+        // push new parent back into the heap
+        heap.push(nextNode, weightArr);
+        nextNode++;
+    }
+
+    // return root of the tree
+    return heap.pop(weightArr);
 }
 
 // Step 4: Use an STL stack to generate codes
@@ -107,6 +133,32 @@ void generateCodes(int root, string codes[]) {
     // Use stack<pair<int, string>> to simulate DFS traversal.
     // Left edge adds '0', right edge adds '1'.
     // Record code when a leaf node is reached.
+    if (root == -1) return;
+
+    stack<pair<int, string>> s;
+    s.push({root, ""});
+
+    while (!s.empty()) {
+        auto [node, code] = s.top();
+        s.pop();
+
+        // Leaf node
+        if (leftArr[node] == -1 && rightArr[node] == -1) {
+            // finds which letter the index that it corresponds to
+            for (int i = 0; i < 26; ++i) {
+                if (charArr[node] == 'a' + i) {
+                    codes[i] = code;
+                    break;
+                }
+            }
+        } else {
+            // pushes right then left node
+            if (rightArr[node] != -1)
+                s.push({rightArr[node], code + "1"});
+            if (leftArr[node] != -1)
+                s.push({leftArr[node], code + "0"});
+        }
+    }
 }
 
 // Step 5: Print table and encoded message
